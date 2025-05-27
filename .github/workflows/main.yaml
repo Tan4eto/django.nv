@@ -27,7 +27,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - run: echo "This is a deploy step"
-  artifact:
-    runs-on: ubuntu-22.04
-    steps:
-      - run: echo "hello" > hello.txt
+
+- name: Generate artifact attestation
+  runs-on: ubuntu-22.04
+  uses: actions/attest-build-provenance@v2
+  steps:
+    - run: echo "hello" > hello.txt
