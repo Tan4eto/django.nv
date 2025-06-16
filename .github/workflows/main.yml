@@ -14,7 +14,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.6'
+          python-version: '3.7'
         continue-on-error: true
       - run: |
           pip3 install --upgrade virtualenv
@@ -33,7 +33,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.6'
+          python-version: '3.7'
         continue-on-error: true
       - run: |
           pip3 install --upgrade virtualenv
