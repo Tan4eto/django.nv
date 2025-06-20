@@ -14,15 +14,14 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
-        continue-on-error: true
+          python-version: '3.6'
+
       - run: |
           pip3 install --upgrade virtualenv
           virtualenv env
           source env/bin/activate
           pip install -r requirements.txt
           python manage.py check
-
 
   test:
     runs-on: ubuntu-22.04
@@ -33,8 +32,8 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
-        continue-on-error: true
+          python-version: '3.6'
+
       - run: |
           pip3 install --upgrade virtualenv
           virtualenv env
@@ -42,10 +41,24 @@ jobs:
           pip install -r requirements.txt
           python manage.py test taskManager
 
+  secret_scanning:
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: docker run --rm -v $(pwd):/src hysnsec/trufflehog filesystem /src --json > trufflehog-output.json
+        continue-on-error: true             # allow the build to fail, similar to "allow_failure: true" in GitLab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TruffleHog
+          path: trufflehog-output.json
+        if: always()                        # what is this for?
 
   integration:
     runs-on: ubuntu-22.04
-    needs: test
+    needs: secret_scanning
     steps:
       - run: echo "This is an integration step"
       - run: exit 1
@@ -56,17 +69,3 @@ jobs:
     needs: integration
     steps:
       - run: echo "This is a deploy step."
-
-  sast:
-    env:
-           DOJO_HOST: "$DOJO_HOST"
-           DOJO_API_TOKEN: "$DOJO_API_TOKEN"
-    runs-on: ubuntu-22.04
-    needs: build
-    continue-on-error: true
-    steps:
-    - run: |
-         docker pull hysnsec/bandit
-         docker run --user $(id -u):$(id -g) -v $(pwd):/src --rm hysnsec/bandit -r /src -f json -o /src/bandit-output.json
-         curl https://gitlab.practical-devsecops.training/-/snippets/28/raw -o upload-results.py || true
-         python3 upload-results.py --host "${{ secrets.DOJO_HOST }}" --api_key "${{ secrets.DOJO_API_TOKEN }}" --engagement_id 1 --product_id 1 --lead_id 1 --environment "Production" --result_file bandit-output.json --scanner "Bandit Scan" 
