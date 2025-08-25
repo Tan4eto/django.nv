@@ -12,7 +12,25 @@ jobs:
     steps:
       - checkout
       - run: echo "This is a test step"
+  semgrep:
+    docker:
+      - image: returntocorp/semgrep-agent:v1
+    environment:
+      SEMGREP_RULES: >- # more at semgrep.dev/explore
+        p/security-audit
+        p/secrets
+        p/django
 
+    steps:
+      - checkout
+
+      - run:
+          name: "Semgrep scan"
+          command: semgrep-agent --gitlab-json > semgrep-output.json
+
+      - store_artifacts:
+          path: semgrep-output.json
+          destination: semgrep-artifact
   integration:
     docker:
       - image: cimg/base:stable
