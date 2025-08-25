@@ -53,7 +53,16 @@ workflows:
   django:
     jobs:
       - build
-      - test
-      - integration
+      - test:
+          requires:
+            - build
+      - semgrep:
+          requires:
+            - test
+      - integration:
+          requires:
+            - sast
       - prod:
           type: approval
+          requires:
+            - integration
